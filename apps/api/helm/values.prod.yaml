@@ -1,0 +1,29 @@
+replicaCount: 2
+
+image:
+  repository: your-dockerhub-username/payment-service
+  tag: "latest"
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+postgres:
+  enabled: false # use managed DO Postgres
+  host: ${DB_HOST}
+  port: 5432
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+  database: ${DB_NAME}
+# helm upgrade --install payment ./apps/payment/helm -f apps/payment/helm/values.dev.yaml
+# or
+# helm upgrade --install payment ./apps/payment/helm -f apps/payment/helm/values.prod.yaml

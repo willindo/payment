@@ -1,0 +1,1 @@
+#!/usr/bin/env bash\n# start-dev: example script to run apps in dev mode (adjust as needed)\nset -e\nexport NODE_ENV=development\n# Run backend and frontend in separate terminals or use tmux\necho "Start each app with: (cd apps/backend && npm run dev)"\n

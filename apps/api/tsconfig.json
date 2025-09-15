@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "types": [
+            "node"
+        ],
+        "module": "commonjs",
+        "target": "es2020",
+        "noImplicitAny": true,
+        "strict": true,
+        "sourceMap": true,
+        "outDir": "dist",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "useDefineForClassFields": false
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
+}
