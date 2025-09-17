@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ParamsTokenFactory } from '@nestjs/core/pipes';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -7,14 +8,15 @@ export class StripeService {
 
   constructor() {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-      apiVersion: '2022-11-15', // compatible with @types/stripe
+      apiVersion: '2025-08-27.basil', // updated to match @types/stripe requirement
     });
   }
 
-  async createPaymentIntent(amount: number, currency: string = 'inr') {
+  async createPaymentIntent(params: Stripe.PaymentIntentCreateParams) {
     const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // convert to smallest currency unit
-      currency: currency.toLowerCase(),
+      ...params,
+      amount: Math.round(params.amount * 100), // convert to smallest currency unit
+      currency: params.currency.toLowerCase(),
       payment_method_types: ['card'],
     });
     return paymentIntent;

@@ -18,13 +18,13 @@ const stripe_1 = __importDefault(require("stripe"));
 let StripeService = class StripeService {
     constructor() {
         this.stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
-            apiVersion: '2024-06-20',
+            apiVersion: '2022-11-15', // compatible with @types/stripe
         });
     }
     async createPaymentIntent(amount, currency = 'inr') {
         const paymentIntent = await this.stripe.paymentIntents.create({
-            amount,
-            currency,
+            amount: Math.round(amount * 100), // convert to smallest currency unit
+            currency: currency.toLowerCase(),
             payment_method_types: ['card'],
         });
         return paymentIntent;

@@ -1,30 +1,39 @@
+# version: "3.9"
+
 services:
-  db:
-    image: postgres:15
+  payment-api:
+    container_name: payment-api
+    build: .
+    ports:
+      - "3002:3000" # host:container
+    env_file:
+      - .env
+    depends_on:
+      - payment-db
+
+  payment-db:
     container_name: payment-db
+    image: postgres:15
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: payment_db
     ports:
-      - "5434:5432" # avoid clashing with local Postgres
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  payment:
-    build: .
-    container_name: payment-service
-    command: npm run start:dev
-    env_file:
-      - .env.development
+  payment-pgadmin:
+    container_name: payment-pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@reload.com
+      PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "${PORT:-3002}:3000" # flexible: use .env PORT or default 3002
+      - "5050:80"
     depends_on:
-      - db
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
+      - payment-db
 
 volumes:
   pgdata:

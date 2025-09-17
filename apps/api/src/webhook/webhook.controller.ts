@@ -1,12 +1,12 @@
 import { Controller, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { PaymentService } from '../payment/payment.service';
+import { PaymentsService } from '../payment/payments.service';
 import { StripeService } from '../stripe/stripe.service';
 
 @Controller('webhook')
 export class WebhookController {
   constructor(
-    private readonly paymentService: PaymentService,
+    private readonly paymentsService: PaymentsService,
     private readonly stripeService: StripeService,
   ) {}
 
@@ -28,13 +28,13 @@ export class WebhookController {
 
     switch (event.type) {
       case 'payment_intent.succeeded':
-        await this.paymentService.markPaymentSuccess(
+        await this.paymentsService.markPaymentSuccess(
           (event.data.object as any).id,
         );
         break;
 
       case 'payment_intent.payment_failed':
-        await this.paymentService.markPaymentFailed(
+        await this.paymentsService.markPaymentFailed(
           (event.data.object as any).id,
         );
         break;

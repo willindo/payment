@@ -15,28 +15,46 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebhookController = void 0;
 const common_1 = require("@nestjs/common");
 const payment_service_1 = require("../payment/payment.service");
-// import { PaymentService } from './payment.service';
+const stripe_service_1 = require("../stripe/stripe.service");
 let WebhookController = class WebhookController {
-    constructor(paymentService) {
+    constructor(paymentService, stripeService) {
         this.paymentService = paymentService;
+        this.stripeService = stripeService;
     }
-    async handleWebhook(signature, payload) {
-        // Delegate to payment service for verification & processing
-        return this.paymentService.handleWebhookEvent(payload, signature);
+    async handleStripeWebhook(req, res) {
+        const sig = req.headers['stripe-signature'];
+        let event;
+        try {
+            event = await this.stripeService.verifyWebhookSignature(req.body, sig);
+        }
+        catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            console.error(`Webhook verification failed:`, message);
+            return res.status(400).send(`Webhook Error: ${message}`);
+        }
+        switch (event.type) {
+            case 'payment_intent.succeeded':
+                await this.paymentService.markPaymentSuccess(event.data.object.id);
+                break;
+            case 'payment_intent.payment_failed':
+                await this.paymentService.markPaymentFailed(event.data.object.id);
+                break;
+        }
+        res.json({ received: true });
     }
 };
 exports.WebhookController = WebhookController;
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    __param(0, (0, common_1.Headers)('stripe-signature')),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
-], WebhookController.prototype, "handleWebhook", null);
+], WebhookController.prototype, "handleStripeWebhook", null);
 exports.WebhookController = WebhookController = __decorate([
     (0, common_1.Controller)('webhook'),
-    __metadata("design:paramtypes", [payment_service_1.PaymentService])
+    __metadata("design:paramtypes", [payment_service_1.PaymentService,
+        stripe_service_1.StripeService])
 ], WebhookController);
 //# sourceMappingURL=webhook.controller.js.map

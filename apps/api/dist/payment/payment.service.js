@@ -11,60 +11,51 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentService = void 0;
 const common_1 = require("@nestjs/common");
-// import Stripe from 'stripe';  // if Stripe is used
-// import { CreatePaymentDto } from './dto/create-payment.dto';
-// import { UpdatePaymentDto } from './dto/update-payment.dto';
+const client_1 = require("@prisma/client");
+const stripe_service_1 = require("../stripe/stripe.service");
+const prisma = new client_1.PrismaClient();
 let PaymentService = class PaymentService {
-    // private stripe: Stripe;
-    constructor() {
-        // this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        //   apiVersion: '2024-06-01',
-        // });
+    constructor(stripe) {
+        this.stripe = stripe;
     }
-    async createPayment(dto) {
-        // Example implementation
-        // const paymentIntent = await this.stripe.paymentIntents.create({
-        //   amount: dto.amount,
-        //   currency: dto.currency,
-        //   metadata: { orderId: dto.orderId },
-        // });
-        // return paymentIntent;
-        return { status: 'pending', ...dto };
+    async createPayment(userId, amount, provider = 'stripe', currency = 'INR') {
+        // DB record as PENDING
+        const payment = await prisma.payment.create({
+            data: {
+                userId,
+                amount,
+                currency,
+                provider: 'stripe',
+                status: 'PENDING',
+            },
+        });
+        // Provider payment intent
+        const intent = await this.stripe.createPaymentIntent(amount, currency, {
+            metadata: { paymentId: payment.id, userId },
+        }); // Type workaround for metadata
+        // Save provider reference
+        await prisma.payment.update({
+            where: { id: payment.id },
+            data: { providerRef: intent.id },
+        });
+        return { payment, client_secret: intent.client_secret };
     }
-    async findAll() {
-        return [{ id: 1, status: 'mocked' }];
+    async markPaymentSuccess(providerRef) {
+        return prisma.payment.updateMany({
+            where: { providerRef },
+            data: { status: 'SUCCESS' },
+        });
     }
-    async findOne(id) {
-        return { id, status: 'mocked-single' };
-    }
-    async update(id, dto) {
-        return { id, ...dto };
-    }
-    async remove(id) {
-        return { id, removed: true };
-    }
-    async handleWebhookEvent(payload, signature) {
-        try {
-            // Verify + parse payload here (Stripe, Razorpay, etc.)
-            // const event = this.stripe.webhooks.constructEvent(
-            //   payload,
-            //   signature,
-            //   process.env.STRIPE_WEBHOOK_SECRET,
-            // );
-            // switch (event.type) { ... }
-            return { received: true, payload };
-        }
-        catch (err) {
-            if (err instanceof Error) {
-                throw new common_1.BadRequestException(`Webhook error: ${err.message}`);
-            }
-            throw new common_1.BadRequestException('Unknown webhook error');
-        }
+    async markPaymentFailed(providerRef) {
+        return prisma.payment.updateMany({
+            where: { providerRef },
+            data: { status: 'FAILED' },
+        });
     }
 };
 exports.PaymentService = PaymentService;
 exports.PaymentService = PaymentService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [])
+    __metadata("design:paramtypes", [stripe_service_1.StripeService])
 ], PaymentService);
 //# sourceMappingURL=payment.service.js.map

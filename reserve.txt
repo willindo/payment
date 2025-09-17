@@ -1,0 +1,22 @@
+1. Service Names
+App (NestJS) → payment-api
+Database → payment-db
+Admin (pgAdmin) → payment-pgadmin
+2. Ports
+NestJS inside container → 3000
+Expose outside (host) → 3002
+Postgres inside container → 5432
+Expose outside (host) → 5432 (ok since only one DB running)
+pgAdmin inside container → 80
+Expose outside (host) → 5050
+
+
+// find ~/dev/payment -type f -name "*.module.ts" \
+//   -not -path "*/node_modules/*" \
+//   -not -path "*/dist/*" \
+//   -not -path "*/.next/*" \
+//   -exec sh -c 'echo "==== {} ===="; cat "{}"; echo' \;
+
+// tree -I 'node_modules|dist|.next|*.tsbuildinfo|*.log' -a ~/dev/payment/apps/api
+// docker compose down -v --remove-orphans
+// docker compose build --no-cache

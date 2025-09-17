@@ -1,19 +1,25 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { json } from 'express';
-import * as bodyParser from 'body-parser';
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
+import { ConfigService } from "@nestjs/config";
+import { json } from "express";
+import * as bodyParser from "body-parser";
 
 async function bootstrap() {
-const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule);
 
-// For normal JSON routes
-app.use(json());
+  // Load config
+  const configService = app.get(ConfigService);
 
-// For Stripe webhooks we need raw body — allow raw on webhook path
-app.use('/webhook', bodyParser.raw({ type: 'application/json' }));
+  // JSON parsing
+  app.use(json());
 
-const port = process.env.PORT || 3000;
-await app.listen(port);
-console.log(`Payment service listening on ${port}`);
+  // Stripe webhook raw body
+  app.use("/webhook", bodyParser.raw({ type: "application/json" }));
+
+  // Respect PORT from .env
+  const port = configService.get<number>("PORT", 3000);
+  await app.listen(port, "0.0.0.0");
+
+  console.log(`🚀 Payment service listening on port ${port}`);
 }
 bootstrap();
