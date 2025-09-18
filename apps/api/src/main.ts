@@ -1,25 +1,20 @@
+import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import * as express from "express";
 import { AppModule } from "./app.module";
-import { ConfigService } from "@nestjs/config";
-import { json } from "express";
-import * as bodyParser from "body-parser";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Load config
-  const configService = app.get(ConfigService);
+  // For Stripe webhook verification we need the raw body
+  app.use("/webhook", express.raw({ type: "application/json" }));
 
-  // JSON parsing
-  app.use(json());
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })
+  );
 
-  // Stripe webhook raw body
-  app.use("/webhook", bodyParser.raw({ type: "application/json" }));
-
-  // Respect PORT from .env
-  const port = configService.get<number>("PORT", 3000);
-  await app.listen(port, "0.0.0.0");
-
-  console.log(`🚀 Payment service listening on port ${port}`);
+  const port = parseInt(process.env.PORT || "3002", 10);
+  await app.listen(port);
+  console.log(`Listening on ${port}`);
 }
 bootstrap();

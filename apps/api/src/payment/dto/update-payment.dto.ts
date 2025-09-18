@@ -1,5 +1,13 @@
+import { IsString, IsNumber, IsPositive } from "class-validator";
+
 export class UpdatePaymentDto {
-  userId?: string;
-  amount?: number;
-  provider?: string;
+  @IsString()
+  userId!: string;
+
+  @IsNumber()
+  @IsPositive()
+  amount!: number;
+
+  @IsString()
+  provider!: string;
 }
